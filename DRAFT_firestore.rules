@@ -1,0 +1,287 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Pillar 1: Global Default-Deny Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Global Hardened Primitives
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerifiedUser() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isAdmin() {
+      return isVerifiedUser() && (
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid)) ||
+        request.auth.token.email == 'merrillalex500@gmail.com'
+      );
+    }
+
+    // Blueprint Validators
+    function isValidUserProfile(data) {
+      return data.keys().hasAll(['uid', 'displayName', 'companyId', 'role', 'createdAt', 'updatedAt']) &&
+        data.keys().hasOnly(['uid', 'displayName', 'companyId', 'role', 'createdAt', 'updatedAt']) &&
+        data.uid is string && data.uid.size() >= 1 && data.uid.size() <= 128 && data.uid.matches('^[a-zA-Z0-9_\\-]+$') &&
+        data.uid == request.auth.uid &&
+        data.displayName is string && data.displayName.size() >= 1 && data.displayName.size() <= 120 &&
+        data.companyId is string && data.companyId.size() >= 1 && data.companyId.size() <= 64 && data.companyId.matches('^[a-zA-Z0-9_\\-]+$') &&
+        data.role is string && data.role.size() <= 32 && data.role in ['SuperAdmin', 'CompanyAdmin', 'Technician'] &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidLossProject(data) {
+      return data.keys().hasAll([
+          'id', 'ownerId', 'companyId', 'clientName', 'lossAddress',
+          'latitude', 'longitude', 'granularity', 'waterCategory',
+          'lossClass', 'stage', 'createdAt', 'updatedAt'
+        ]) &&
+        data.keys().hasOnly([
+          'id', 'ownerId', 'companyId', 'clientName', 'lossAddress',
+          'latitude', 'longitude', 'granularity', 'waterCategory',
+          'lossClass', 'stage', 'createdAt', 'updatedAt'
+        ]) &&
+        data.id is string && data.id.size() >= 1 && data.id.size() <= 128 && data.id.matches('^[a-zA-Z0-9_\\-]+$') &&
+        data.ownerId is string && data.ownerId.size() >= 1 && data.ownerId.size() <= 128 && data.ownerId.matches('^[a-zA-Z0-9_\\-]+$') &&
+        data.ownerId == request.auth.uid &&
+        data.companyId is string && data.companyId.size() >= 1 && data.companyId.size() <= 64 && data.companyId.matches('^[a-zA-Z0-9_\\-]+$') &&
+        data.clientName is string && data.clientName.size() >= 1 && data.clientName.size() <= 160 &&
+        data.lossAddress is string && data.lossAddress.size() >= 1 && data.lossAddress.size() <= 300 &&
+        data.latitude is number && data.latitude >= -90 && data.latitude <= 90 &&
+        data.longitude is number && data.longitude >= -180 && data.longitude <= 180 &&
+        data.granularity is string && data.granularity.size() <= 32 && data.granularity in ['ROOFTOP', 'RANGE_INTERPOLATED', 'GEOMETRIC_CENTER', 'APPROXIMATE'] &&
+        data.waterCategory is string && data.waterCategory.size() <= 16 && data.waterCategory in ['CAT_1', 'CAT_2', 'CAT_3'] &&
+        data.lossClass is string && data.lossClass.size() <= 16 && data.lossClass in ['CLASS_1', 'CLASS_2', 'CLASS_3', 'CLASS_4'] &&
+        data.stage is string && data.stage.size() <= 32 && data.stage in ['Intake', 'Inspection', 'Scope', 'Stabilize', 'Monitor', 'Closeout'] &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidPsychrometricReading(data) {
+      return data.keys().hasAll(['id', 'projectId', 'ownerId', 'roomName', 'tempF', 'rhPercent', 'gpp', 'mcPercent', 'createdAt']) &&
+        data.keys().hasOnly(['id', 'projectId', 'ownerId', 'roomName', 'tempF', 'rhPercent', 'gpp', 'mcPercent', 'createdAt']) &&
+        data.id is string && data.id.size() >= 1 && data.id.size() <= 128 && data.id.matches('^[a-zA-Z0-9_\\-]+$') &&
+        data.projectId is string && data.projectId.size() >= 1 && data.projectId.size() <= 128 && data.projectId.matches('^[a-zA-Z0-9_\\-]+$') &&
+        data.ownerId is string && data.ownerId.size() >= 1 && data.ownerId.size() <= 128 && data.ownerId.matches('^[a-zA-Z0-9_\\-]+$') &&
+        data.ownerId == request.auth.uid &&
+        data.roomName is string && data.roomName.size() >= 1 && data.roomName.size() <= 100 &&
+        data.tempF is number && data.tempF >= -50 && data.tempF <= 250 &&
+        data.rhPercent is number && data.rhPercent >= 0 && data.rhPercent <= 100 &&
+        data.gpp is number && data.gpp >= 0 && data.gpp <= 500 &&
+        data.mcPercent is number && data.mcPercent >= 0 && data.mcPercent <= 100 &&
+        data.createdAt is timestamp;
+    }
+
+    function isValidDeployedEquipment(data) {
+      return data.keys().hasAll([
+          'id', 'projectId', 'ownerId', 'type', 'serialNumber',
+          'roomName', 'ampDraw', 'dailyRate', 'runtimeHours',
+          'status', 'createdAt', 'updatedAt'
+        ]) &&
+        data.keys().hasOnly([
+          'id', 'projectId', 'ownerId', 'type', 'serialNumber',
+          'roomName', 'ampDraw', 'dailyRate', 'runtimeHours',
+          'status', 'createdAt', 'updatedAt'
+        ]) &&
+        data.id is string && data.id.size() >= 1 && data.id.size() <= 128 && data.id.matches('^[a-zA-Z0-9_\\-]+$') &&
+        data.projectId is string && data.projectId.size() >= 1 && data.projectId.size() <= 128 && data.projectId.matches('^[a-zA-Z0-9_\\-]+$') &&
+        data.ownerId is string && data.ownerId.size() >= 1 && data.ownerId.size() <= 128 && data.ownerId.matches('^[a-zA-Z0-9_\\-]+$') &&
+        data.ownerId == request.auth.uid &&
+        data.type is string && data.type.size() <= 32 && data.type in ['LGR_DEHU', 'AIR_MOVER', 'HEPA_SCRUBBER', 'INJECTIDRY'] &&
+        data.serialNumber is string && data.serialNumber.size() >= 1 && data.serialNumber.size() <= 64 &&
+        data.roomName is string && data.roomName.size() >= 1 && data.roomName.size() <= 100 &&
+        data.ampDraw is number && data.ampDraw >= 0 && data.ampDraw <= 50 &&
+        data.dailyRate is number && data.dailyRate >= 0 && data.dailyRate <= 5000 &&
+        data.runtimeHours is number && data.runtimeHours >= 0 && data.runtimeHours <= 100000 &&
+        data.status is string && data.status.size() <= 32 && data.status in ['Running', 'Standby', 'Extracted'] &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidFieldUnit(data) {
+      return data.keys().hasAll([
+          'id', 'ownerId', 'companyId', 'callsign', 'leadTech',
+          'vehicle', 'status', 'activeProjectId', 'directive',
+          'slaPriority', 'createdAt', 'updatedAt'
+        ]) &&
+        data.keys().hasOnly([
+          'id', 'ownerId', 'companyId', 'callsign', 'leadTech',
+          'vehicle', 'status', 'activeProjectId', 'directive',
+          'slaPriority', 'createdAt', 'updatedAt'
+        ]) &&
+        data.id is string && data.id.size() >= 1 && data.id.size() <= 128 && data.id.matches('^[a-zA-Z0-9_\\-]+$') &&
+        data.ownerId is string && data.ownerId.size() >= 1 && data.ownerId.size() <= 128 && data.ownerId.matches('^[a-zA-Z0-9_\\-]+$') &&
+        data.ownerId == request.auth.uid &&
+        data.companyId is string && data.companyId.size() >= 1 && data.companyId.size() <= 64 && data.companyId.matches('^[a-zA-Z0-9_\\-]+$') &&
+        data.callsign is string && data.callsign.size() >= 1 && data.callsign.size() <= 64 &&
+        data.leadTech is string && data.leadTech.size() >= 1 && data.leadTech.size() <= 100 &&
+        data.vehicle is string && data.vehicle.size() >= 1 && data.vehicle.size() <= 100 &&
+        data.status is string && data.status.size() <= 32 && data.status in ['Available', 'Dispatched', 'OnSite', 'StandDown'] &&
+        data.activeProjectId is string && data.activeProjectId.size() <= 128 &&
+        data.directive is string && data.directive.size() <= 500 &&
+        data.slaPriority is string && data.slaPriority.size() <= 32 && data.slaPriority in ['Emergency 60m', 'Urgent 2h', 'Standard 4h', 'None'] &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    // Admins lookup collection (read-only from client)
+    match /admins/{adminId} {
+      allow get: if isSignedIn() && isValidId(adminId) && request.auth.uid == adminId;
+      allow list, create, update, delete: if false;
+    }
+
+    // Users collection (PII / Role isolated to Owner or Admin, no self-assigned admin roles)
+    match /users/{userId} {
+      allow get: if isSignedIn() && isValidId(userId) && (request.auth.uid == userId || isAdmin());
+      allow list: if isSignedIn() && (resource.data.uid == request.auth.uid || isAdmin());
+      allow create: if isVerifiedUser() && isValidId(userId) && userId == request.auth.uid &&
+        isValidUserProfile(incoming()) &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time &&
+        (incoming().role == 'Technician' || isAdmin());
+      allow update: if isVerifiedUser() && isValidId(userId) && isValidUserProfile(incoming()) &&
+        incoming().uid == existing().uid &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time && (
+          (request.auth.uid == userId && incoming().role == existing().role && incoming().companyId == existing().companyId &&
+            incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'updatedAt'])) ||
+          isAdmin()
+        );
+      allow delete: if isVerifiedUser() && isValidId(userId) && isAdmin();
+    }
+
+    // Loss Projects collection
+    match /projects/{projectId} {
+      allow get: if isSignedIn() && isValidId(projectId) && (existing().ownerId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn() && (resource.data.ownerId == request.auth.uid || isAdmin());
+      allow create: if isVerifiedUser() && isValidId(projectId) &&
+        isValidLossProject(incoming()) &&
+        incoming().id == projectId &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time;
+      allow update: if isVerifiedUser() && isValidId(projectId) &&
+        isValidLossProject(incoming()) &&
+        incoming().id == existing().id &&
+        incoming().ownerId == existing().ownerId &&
+        incoming().companyId == existing().companyId &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time && (
+          isAdmin() || (
+            existing().ownerId == request.auth.uid &&
+            existing().stage != 'Closeout' && (
+              // Action 1: Stage & Classification Progression
+              incoming().diff(existing()).affectedKeys().hasOnly(['stage', 'waterCategory', 'lossClass', 'updatedAt']) ||
+              // Action 2: Location & Client Metadata Update
+              incoming().diff(existing()).affectedKeys().hasOnly(['clientName', 'lossAddress', 'latitude', 'longitude', 'granularity', 'updatedAt'])
+            )
+          )
+        );
+      allow delete: if isVerifiedUser() && isValidId(projectId) && (existing().ownerId == request.auth.uid || isAdmin());
+
+      // Subcollection: Psychrometric Readings (Master Gate enforced)
+      match /readings/{readingId} {
+        allow get: if isSignedIn() && isValidId(projectId) && isValidId(readingId) && (
+          existing().ownerId == request.auth.uid ||
+          get(/databases/$(database)/documents/projects/$(projectId)).data.ownerId == request.auth.uid ||
+          isAdmin()
+        );
+        allow list: if isSignedIn() && isValidId(projectId) && (
+          resource.data.ownerId == request.auth.uid || isAdmin()
+        );
+        allow create: if isVerifiedUser() && isValidId(projectId) && isValidId(readingId) &&
+          isValidPsychrometricReading(incoming()) &&
+          incoming().id == readingId &&
+          incoming().projectId == projectId &&
+          incoming().createdAt == request.time &&
+          exists(/databases/$(database)/documents/projects/$(projectId)) &&
+          (get(/databases/$(database)/documents/projects/$(projectId)).data.ownerId == request.auth.uid || isAdmin());
+        allow update: if false; // Readings are immutable audit logs
+        allow delete: if isVerifiedUser() && isValidId(projectId) && isValidId(readingId) && (
+          existing().ownerId == request.auth.uid || isAdmin()
+        );
+      }
+
+      // Subcollection: Deployed Equipment (Master Gate enforced)
+      match /equipment/{equipmentId} {
+        allow get: if isSignedIn() && isValidId(projectId) && isValidId(equipmentId) && (
+          existing().ownerId == request.auth.uid ||
+          get(/databases/$(database)/documents/projects/$(projectId)).data.ownerId == request.auth.uid ||
+          isAdmin()
+        );
+        allow list: if isSignedIn() && isValidId(projectId) && (
+          resource.data.ownerId == request.auth.uid || isAdmin()
+        );
+        allow create: if isVerifiedUser() && isValidId(projectId) && isValidId(equipmentId) &&
+          isValidDeployedEquipment(incoming()) &&
+          incoming().id == equipmentId &&
+          incoming().projectId == projectId &&
+          incoming().createdAt == request.time &&
+          incoming().updatedAt == request.time &&
+          exists(/databases/$(database)/documents/projects/$(projectId)) &&
+          (get(/databases/$(database)/documents/projects/$(projectId)).data.ownerId == request.auth.uid || isAdmin());
+        allow update: if isVerifiedUser() && isValidId(projectId) && isValidId(equipmentId) &&
+          isValidDeployedEquipment(incoming()) &&
+          incoming().id == existing().id &&
+          incoming().projectId == existing().projectId &&
+          incoming().ownerId == existing().ownerId &&
+          incoming().createdAt == existing().createdAt &&
+          incoming().updatedAt == request.time &&
+          exists(/databases/$(database)/documents/projects/$(projectId)) && (
+            isAdmin() || (
+              existing().ownerId == request.auth.uid &&
+              get(/databases/$(database)/documents/projects/$(projectId)).data.ownerId == request.auth.uid &&
+              incoming().diff(existing()).affectedKeys().hasOnly(['runtimeHours', 'status', 'roomName', 'updatedAt'])
+            )
+          );
+        allow delete: if isVerifiedUser() && isValidId(projectId) && isValidId(equipmentId) && (
+          existing().ownerId == request.auth.uid || isAdmin()
+        );
+      }
+    }
+
+    // Field Units collection (Crew Dispatch)
+    match /field_units/{unitId} {
+      allow get: if isSignedIn() && isValidId(unitId) && (existing().ownerId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn() && (resource.data.ownerId == request.auth.uid || isAdmin());
+      allow create: if isVerifiedUser() && isValidId(unitId) &&
+        isValidFieldUnit(incoming()) &&
+        incoming().id == unitId &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time;
+      allow update: if isVerifiedUser() && isValidId(unitId) &&
+        isValidFieldUnit(incoming()) &&
+        incoming().id == existing().id &&
+        incoming().ownerId == existing().ownerId &&
+        incoming().companyId == existing().companyId &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time && (
+          isAdmin() || (
+            existing().ownerId == request.auth.uid && (
+              // Action 1: Dispatch / Reassign / Stand Down / Activate Unit
+              incoming().diff(existing()).affectedKeys().hasOnly(['status', 'activeProjectId', 'directive', 'slaPriority', 'updatedAt']) ||
+              // Action 2: Roster Metadata Update
+              incoming().diff(existing()).affectedKeys().hasOnly(['callsign', 'leadTech', 'vehicle', 'updatedAt'])
+            )
+          )
+        );
+      allow delete: if isVerifiedUser() && isValidId(unitId) && (existing().ownerId == request.auth.uid || isAdmin());
+    }
+  }
+}

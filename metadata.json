@@ -1,0 +1,12 @@
+{
+  "name": "Restoration-AI",
+  "description": "ANSI/IICRC S500 Water Damage Restoration & S520 Mold Remediation field management, psychrometric telemetry, offline-first IndexedDB sync, and hybrid AI intelligence platform.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone",
+    "geolocation"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

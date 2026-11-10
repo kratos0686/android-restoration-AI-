@@ -1,0 +1,370 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Public technician or administrator profile scoped to a restoration company.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "description": "Firebase Auth UID of the user."
+        },
+        "displayName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120,
+          "description": "Full name of the technician or manager."
+        },
+        "companyId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "description": "Tenant restoration company identifier."
+        },
+        "role": {
+          "type": "string",
+          "enum": ["SuperAdmin", "CompanyAdmin", "Technician"],
+          "maxLength": 32,
+          "description": "Assigned RBAC role."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Creation server timestamp."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Last update server timestamp."
+        }
+      },
+      "required": ["uid", "displayName", "companyId", "role", "createdAt", "updatedAt"]
+    },
+    "LossProject": {
+      "title": "LossProject",
+      "description": "ANSI/IICRC S500/S520 water or mold loss dossier.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "description": "Unique project identifier."
+        },
+        "ownerId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "description": "UID of the creator/owner."
+        },
+        "companyId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "description": "Tenant restoration company ID."
+        },
+        "clientName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 160,
+          "description": "Property owner or commercial account name."
+        },
+        "lossAddress": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 300,
+          "description": "Verified street address of the loss."
+        },
+        "latitude": {
+          "type": "number",
+          "description": "GPS latitude coordinate."
+        },
+        "longitude": {
+          "type": "number",
+          "description": "GPS longitude coordinate."
+        },
+        "granularity": {
+          "type": "string",
+          "enum": ["ROOFTOP", "RANGE_INTERPOLATED", "GEOMETRIC_CENTER", "APPROXIMATE"],
+          "maxLength": 32,
+          "description": "Geocoding precision level."
+        },
+        "waterCategory": {
+          "type": "string",
+          "enum": ["CAT_1", "CAT_2", "CAT_3"],
+          "maxLength": 16,
+          "description": "IICRC S500 Water Contamination Category."
+        },
+        "lossClass": {
+          "type": "string",
+          "enum": ["CLASS_1", "CLASS_2", "CLASS_3", "CLASS_4"],
+          "maxLength": 16,
+          "description": "IICRC S500 Evaporation Load Class."
+        },
+        "stage": {
+          "type": "string",
+          "enum": ["Intake", "Inspection", "Scope", "Stabilize", "Monitor", "Closeout"],
+          "maxLength": 32,
+          "description": "Current mitigation workflow stage."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of creation."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp of last update."
+        }
+      },
+      "required": [
+        "id",
+        "ownerId",
+        "companyId",
+        "clientName",
+        "lossAddress",
+        "latitude",
+        "longitude",
+        "granularity",
+        "waterCategory",
+        "lossClass",
+        "stage",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "PsychrometricReading": {
+      "title": "PsychrometricReading",
+      "description": "Atmospheric and material moisture reading under a LossProject.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "projectId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "ownerId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "roomName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "tempF": {
+          "type": "number"
+        },
+        "rhPercent": {
+          "type": "number"
+        },
+        "gpp": {
+          "type": "number"
+        },
+        "mcPercent": {
+          "type": "number"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["id", "projectId", "ownerId", "roomName", "tempF", "rhPercent", "gpp", "mcPercent", "createdAt"]
+    },
+    "DeployedEquipment": {
+      "title": "DeployedEquipment",
+      "description": "Air mover, LGR dehumidifier, or HEPA air scrubber deployed on a loss.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "projectId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "ownerId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["LGR_DEHU", "AIR_MOVER", "HEPA_SCRUBBER", "INJECTIDRY"],
+          "maxLength": 32
+        },
+        "serialNumber": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "roomName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "ampDraw": {
+          "type": "number"
+        },
+        "dailyRate": {
+          "type": "number"
+        },
+        "runtimeHours": {
+          "type": "number"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["Running", "Standby", "Extracted"],
+          "maxLength": 32
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "projectId",
+        "ownerId",
+        "type",
+        "serialNumber",
+        "roomName",
+        "ampDraw",
+        "dailyRate",
+        "runtimeHours",
+        "status",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "FieldUnit": {
+      "title": "FieldUnit",
+      "description": "Mitigation response crew unit managed in Crew Dispatch.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "ownerId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "companyId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "callsign": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "leadTech": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "vehicle": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "status": {
+          "type": "string",
+          "enum": ["Available", "Dispatched", "OnSite", "StandDown"],
+          "maxLength": 32
+        },
+        "activeProjectId": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "directive": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "slaPriority": {
+          "type": "string",
+          "enum": ["Emergency 60m", "Urgent 2h", "Standard 4h", "None"],
+          "maxLength": 32
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "ownerId",
+        "companyId",
+        "callsign",
+        "leadTech",
+        "vehicle",
+        "status",
+        "activeProjectId",
+        "directive",
+        "slaPriority",
+        "createdAt",
+        "updatedAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "User profiles isolated to owner and admins."
+    },
+    "/projects/{projectId}": {
+      "schema": { "$ref": "#/entities/LossProject" },
+      "description": "Loss dossier root collection."
+    },
+    "/projects/{projectId}/readings/{readingId}": {
+      "schema": { "$ref": "#/entities/PsychrometricReading" },
+      "description": "Subcollection of psychrometric and moisture readings."
+    },
+    "/projects/{projectId}/equipment/{equipmentId}": {
+      "schema": { "$ref": "#/entities/DeployedEquipment" },
+      "description": "Subcollection of deployed drying and HEPA equipment."
+    },
+    "/field_units/{unitId}": {
+      "schema": { "$ref": "#/entities/FieldUnit" },
+      "description": "Crew dispatch field units."
+    }
+  }
+}
